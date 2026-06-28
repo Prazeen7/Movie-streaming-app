@@ -17,6 +17,8 @@ export default function Dashboard() {
   const [selectedMovie, setSelectedMovie] = useState(null);
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
+  const [topRateMovie, setTopRateMovie] = useState([]);
+  const [topRatedTv, setTopRatedTv] = useState([]);
 
   useEffect(() => {
     const fetchMovies = async () => {
@@ -46,6 +48,36 @@ export default function Dashboard() {
       }
     };
     fetchTv();
+  }, []);
+
+  useEffect(() => {
+    const fetchTopMovie = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/top/movie`);
+        if (!response.ok) throw new Error('Failed to fetch Movie');
+        const data = await response.json();
+        setTopRateMovie(data.results || []);
+      } catch (error) {
+        console.error('Error fetching Movie:', error);
+        setTopRateMovie([]);
+      }
+    };
+    fetchTopMovie();
+  }, []);
+
+  useEffect(() => {
+    const fetchTopTv = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/top/tv`);
+        if (!response.ok) throw new Error('Failed to fetch Tv Show');
+        const data = await response.json();
+        setTopRatedTv(data.results || []);
+      } catch (error) {
+        console.error('Error fetching Tv show:', error);
+        setTopRateTv([]);
+      }
+    };
+    fetchTopTv();
   }, []);
 
   useEffect(() => {
@@ -248,7 +280,7 @@ export default function Dashboard() {
             setSelectedMovie={handleContentSelect}
             getProgress={customGetProgress}
           />
-          
+
           <ContinueWatching
             setSelectedMovie={handleContentSelect}
             movies={movies}
@@ -266,6 +298,24 @@ export default function Dashboard() {
           <MovieSection
             title="Series"
             movies={tv}
+            selectedMovie={selectedMovie}
+            setSelectedMovie={handleContentSelect}
+            getProgress={customGetProgress}
+            contentType="tv"
+          />
+
+          <MovieSection
+            title="Top Rated Movies"
+            movies={topRateMovie}
+            selectedMovie={selectedMovie}
+            setSelectedMovie={handleContentSelect}
+            getProgress={customGetProgress}
+            contentType="Movie"
+          />
+
+          <MovieSection
+            title="Top Rated Series"
+            movies={topRatedTv}
             selectedMovie={selectedMovie}
             setSelectedMovie={handleContentSelect}
             getProgress={customGetProgress}

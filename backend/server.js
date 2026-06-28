@@ -50,6 +50,42 @@ app.get('/api/trending/tv', async (req, res) => {
     }
 });
 
+app.get('/api/top/movie', async (req, res) => {
+    try {
+        const response = await axios.get('https://api.themoviedb.org/3/movie/top_rated', {
+            headers: {
+                'Authorization': `Bearer ${process.env.TMDB_API_TOKEN}`,
+                'accept': 'application/json'
+            },
+            params: {
+                language: 'en-US'
+            }
+        });
+        res.json(response.data);
+    } catch (error) {
+        console.error('Error fetching trending TV:', error.message);
+        res.status(500).json({ error: 'Failed to fetch trending TV' });
+    }
+});
+
+app.get('/api/top/tv', async (req, res) => {
+    try {
+        const response = await axios.get('https://api.themoviedb.org/3/tv/top_rated', {
+            headers: {
+                'Authorization': `Bearer ${process.env.TMDB_API_TOKEN}`,
+                'accept': 'application/json'
+            },
+            params: {
+                language: 'en-US'
+            }
+        });
+        res.json(response.data);
+    } catch (error) {
+        console.error('Error fetching trending TV:', error.message);
+        res.status(500).json({ error: 'Failed to fetch trending TV' });
+    }
+});
+
 // Get content by ID (movie or TV)
 app.get('/api/content/:type/:id', async (req, res) => {
     const { type, id } = req.params;

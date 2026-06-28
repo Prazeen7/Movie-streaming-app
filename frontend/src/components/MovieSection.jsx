@@ -117,7 +117,22 @@ export default function MovieSection({ title, movies, selectedMovie, setSelected
                     objectFit: 'cover'
                   }}
                 />
-                <p style={{ marginTop: '0.5rem', fontWeight: 'bold', textAlign: 'center', color: '#fff' }}>
+                <p style={{ 
+                  marginTop: '0.5rem', 
+                  fontWeight: 'bold', 
+                  textAlign: 'center', 
+                  color: '#fff',
+                  display: '-webkit-box',
+                  WebkitLineClamp: 2,
+                  WebkitBoxOrient: 'vertical',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  wordBreak: 'break-word',
+                  lineHeight: '1.4',
+                  maxHeight: '2.8em',
+                  minHeight: '2.8em',
+                  padding: '0 0.2rem'
+                }}>
                   {item.title || item.name}
                 </p>
                 <p style={{ fontSize: '0.8rem', opacity: 0.7, textAlign: 'center', color: '#ccc' }}>
