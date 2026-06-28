@@ -79,7 +79,7 @@ export default function Dashboard() {
         setTopRatedTv(data.results || []);
       } catch (error) {
         console.error('Error fetching Tv show:', error);
-        setTopRateTv([]);
+        setTopRatedTv([]);
       }
     };
     fetchTopTv();
@@ -97,30 +97,51 @@ export default function Dashboard() {
     if (!searchTerm) {
       setFilteredMovie([]);
       setFilteredTv([]);
+      setLoading(false);
       return;
     }
+
+    // Don't search if query is too short
+    if (searchTerm.trim().length < 2) {
+      setFilteredMovie([]);
+      setFilteredTv([]);
+      return;
+    }
+
+    // Use AbortController to cancel previous requests
+    const abortController = new AbortController();
 
     const search = async () => {
       setLoading(true);
       try {
         const response = await fetch(
-          `${API_BASE_URL}/search?query=${encodeURIComponent(searchTerm)}`
+          `${API_BASE_URL}/search?query=${encodeURIComponent(searchTerm)}`,
+          { signal: abortController.signal }
         );
         if (!response.ok) throw new Error('Search failed');
         const data = await response.json();
         setFilteredMovie(data.movies || []);
         setFilteredTv(data.tv || []);
       } catch (error) {
+        // Don't update state if request was aborted
+        if (error.name === 'AbortError') return;
         console.error('Error searching:', error);
         setFilteredMovie([]);
         setFilteredTv([]);
       } finally {
-        setLoading(false);
+        // Don't update loading state if request was aborted
+        if (!abortController.signal.aborted) {
+          setLoading(false);
+        }
       }
     };
 
     const timeoutId = setTimeout(search, 300);
-    return () => clearTimeout(timeoutId);
+    
+    return () => {
+      clearTimeout(timeoutId);
+      abortController.abort();
+    };
   }, [searchTerm]);
 
   const slideshowMovies = movies.slice(0, 5);

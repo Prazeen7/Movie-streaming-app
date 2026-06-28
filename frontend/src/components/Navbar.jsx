@@ -5,9 +5,20 @@ export default function Navbar({ searchTerm, setSearchTerm, selectedMovie, setSe
   const navigate = useNavigate();
   const location = useLocation();
 
-  const handleHomeClick = () => navigate('/movie-streaming-app');
-  const handleMoviesClick = () => navigate('/movie-streaming-app/movies');
-  const handleSeriesClick = () => navigate('/movie-streaming-app/series');
+  const handleHomeClick = () => {
+    setSearchTerm('');
+    navigate('/movie-streaming-app');
+  };
+
+  const handleMoviesClick = () => {
+    setSearchTerm('');
+    navigate('/movie-streaming-app/movies');
+  };
+
+  const handleSeriesClick = () => {
+    setSearchTerm('');
+    navigate('/movie-streaming-app/series');
+  };
 
   const currentPath = location.pathname.replace(/\/$/, '');
   const isActive = (path) => currentPath === path.replace(/\/$/, '');

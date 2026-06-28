@@ -6,14 +6,16 @@ import { useOutletContext } from 'react-router-dom';
 
 const API_BASE_URL = 'https://movie-streaming-app-skxm.onrender.com/api';
 
-export default function Movies() {
-    const [movies, setMovies] = useState([]);
+export default function Series() {
+    const [tvShows, setTvShows] = useState([]);
+    const [searchResults, setSearchResults] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [searchLoading, setSearchLoading] = useState(false);
     const [page, setPage] = useState(1);
     const [hasMore, setHasMore] = useState(true);
     const [totalPages, setTotalPages] = useState(0);
     const observerRef = useRef(null);
-    const lastMovieRef = useRef(null);
+    const lastShowRef = useRef(null);
 
     const {
         searchTerm,
@@ -22,22 +24,22 @@ export default function Movies() {
         setSelectedMovie
     } = useOutletContext();
 
-    // Fetch movies with pagination
-    const fetchMovies = useCallback(async (pageNum, append = false) => {
+    // Fetch TV shows with pagination
+    const fetchTvShows = useCallback(async (pageNum, append = false) => {
         if (!hasMore && pageNum > 1) return;
         setLoading(true);
         try {
             const response = await fetch(`${API_BASE_URL}/alltv?page=${pageNum}`);
-            if (!response.ok) throw new Error('Failed to fetch movies');
+            if (!response.ok) throw new Error('Failed to fetch TV shows');
             const data = await response.json();
 
             const results = data.results || [];
             setTotalPages(data.total_pages || 0);
 
             if (append) {
-                setMovies(prev => [...prev, ...results]);
+                setTvShows(prev => [...prev, ...results]);
             } else {
-                setMovies(results);
+                setTvShows(results);
             }
 
             if (pageNum >= data.total_pages || results.length === 0) {
@@ -46,7 +48,7 @@ export default function Movies() {
                 setHasMore(true);
             }
         } catch (error) {
-            console.error('Error fetching movies:', error);
+            console.error('Error fetching TV shows:', error);
         } finally {
             setLoading(false);
         }
@@ -54,43 +56,88 @@ export default function Movies() {
 
     // Initial load
     useEffect(() => {
-        fetchMovies(1, false);
+        fetchTvShows(1, false);
         setPage(1);
         setHasMore(true);
     }, []);
 
+    // Search effect with debounce and AbortController
     useEffect(() => {
-        if (loading || !hasMore) return;
+        if (!searchTerm) {
+            setSearchResults([]);
+            setSearchLoading(false);
+            return;
+        }
+
+        // Don't search if query is too short
+        if (searchTerm.trim().length < 2) {
+            setSearchResults([]);
+            return;
+        }
+
+        // Use AbortController to cancel previous requests
+        const abortController = new AbortController();
+
+        const searchTvShows = async () => {
+            setSearchLoading(true);
+            try {
+                const response = await fetch(
+                    `${API_BASE_URL}/search?query=${encodeURIComponent(searchTerm)}`,
+                    { signal: abortController.signal }
+                );
+                if (!response.ok) throw new Error('Search failed');
+                const data = await response.json();
+                setSearchResults(data.tv || []);
+            } catch (error) {
+                // Don't update state if request was aborted
+                if (error.name === 'AbortError') return;
+                console.error('Error searching TV shows:', error);
+                setSearchResults([]);
+            } finally {
+                // Don't update loading state if request was aborted
+                if (!abortController.signal.aborted) {
+                    setSearchLoading(false);
+                }
+            }
+        };
+
+        const timeoutId = setTimeout(searchTvShows, 300);
+        
+        return () => {
+            clearTimeout(timeoutId);
+            abortController.abort();
+        };
+    }, [searchTerm]);
+
+    // Infinite scroll observer - only active when NOT searching
+    useEffect(() => {
+        // Don't observe if searching, loading, or no more pages
+        if (loading || !hasMore || searchTerm) return;
 
         const observer = new IntersectionObserver(
             (entries) => {
-                if (entries[0].isIntersecting && hasMore && !loading) {
+                if (entries[0].isIntersecting && hasMore && !loading && !searchTerm) {
                     const nextPage = page + 1;
                     setPage(nextPage);
-                    fetchMovies(nextPage, true);
+                    fetchTvShows(nextPage, true);
                 }
             },
             { threshold: 0.1, rootMargin: '100px' }
         );
 
-        if (lastMovieRef.current) {
-            observer.observe(lastMovieRef.current);
+        if (lastShowRef.current) {
+            observer.observe(lastShowRef.current);
         }
 
         return () => {
-            if (lastMovieRef.current) {
-                observer.unobserve(lastMovieRef.current);
+            if (lastShowRef.current) {
+                observer.unobserve(lastShowRef.current);
             }
         };
-    }, [loading, hasMore, page, fetchMovies]);
+    }, [loading, hasMore, page, fetchTvShows, searchTerm]);
 
-    // Filter movies based on search term
-    const filteredMovies = searchTerm
-        ? movies.filter(movie =>
-            movie?.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            movie?.overview?.toLowerCase().includes(searchTerm.toLowerCase())
-        )
-        : movies;
+    // Display search results when searching, otherwise show paginated TV shows
+    const displayShows = searchTerm ? searchResults : tvShows;
 
     const customGetProgress = (content, type) => {
         return getProgress(content.id, type || 'movie');
@@ -100,43 +147,54 @@ export default function Movies() {
         setSelectedMovie(content);
     };
 
-    if (loading && movies.length === 0) {
+    if (loading && tvShows.length === 0 && !searchTerm) {
         return <Loader fullScreen transparent={false} />;
     }
 
     return (
         <div style={{ backgroundColor: '#0f0f1a', color: '#fff', minHeight: '100vh', fontFamily: 'Arial, sans-serif' }}>
 
+            {/* Show search loading overlay */}
+            {searchLoading && <Loader fullScreen transparent />}
+
             <MovieSection
                 title=" "
-                movies={filteredMovies}
+                movies={displayShows}
                 selectedMovie={selectedMovie}
                 setSelectedMovie={handleContentSelect}
                 getProgress={customGetProgress}
                 displayMode="vertical"
             />
 
-            {/* Loading indicator for infinite scroll */}
-            {loading && movies.length > 0 && (
+            {/* Loading indicator for infinite scroll (only show when NOT searching) */}
+            {loading && tvShows.length > 0 && !searchTerm && (
                 <div style={{ textAlign: 'center', padding: '20px' }}>
                     <Loader size="small" />
                 </div>
             )}
 
-            {/* Sentinel element for Intersection Observer */}
-            {!loading && hasMore && movies.length > 0 && (
-                <div ref={lastMovieRef} style={{ height: '20px', margin: '20px 0' }} />
+            {/* Sentinel element for Intersection Observer (only when NOT searching) */}
+            {!loading && hasMore && tvShows.length > 0 && !searchTerm && (
+                <div ref={lastShowRef} style={{ height: '20px', margin: '20px 0' }} />
             )}
 
-            {!hasMore && movies.length > 0 && (
+            {/* End message (only when NOT searching) */}
+            {!hasMore && tvShows.length > 0 && !searchTerm && (
                 <p style={{ textAlign: 'center', color: '#666', padding: '20px' }}>
                     You've reached the end! 🎬
                 </p>
             )}
 
-            {filteredMovies.length === 0 && !loading && (
+            {/* No results message */}
+            {displayShows.length === 0 && !loading && !searchLoading && searchTerm && (
                 <p style={{ textAlign: 'center', padding: '40px', color: '#888' }}>
-                    No movies found
+                    No series found for "{searchTerm}"
+                </p>
+            )}
+
+            {displayShows.length === 0 && !loading && !searchTerm && (
+                <p style={{ textAlign: 'center', padding: '40px', color: '#888' }}>
+                    No series available
                 </p>
             )}
 
@@ -205,7 +263,7 @@ export default function Movies() {
                             ✕
                         </button>
                         <iframe
-                            src={`https://www.vidking.net/embed/movie/${selectedMovie.id}?color=e50914&autoPlay=true`}
+                            src={`https://www.vidking.net/embed/tv/${selectedMovie.id}/1/1?color=e50914&autoPlay=true&nextEpisode=true&episodeSelector=true`}
                             width="100%"
                             height="100%"
                             frameBorder="0"
