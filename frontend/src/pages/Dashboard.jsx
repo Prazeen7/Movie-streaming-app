@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import Navbar from '../components/Navbar';
 import Slideshow from '../components/Slideshow';
 import MovieSection from '../components/MovieSection';
 import Loader from '../components/Loader';
@@ -240,7 +239,6 @@ export default function Dashboard() {
 
   return (
     <div style={{ backgroundColor: '#0f0f1a', color: '#fff', minHeight: '100vh', fontFamily: 'Arial, sans-serif' }}>
-      <Navbar searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
 
       {loading && <Loader fullScreen transparent />}
 

@@ -13,6 +13,22 @@ app.use(cors({
 }));
 app.use(express.json());
 
+// Helper function to fetch paginated data from TMDb
+const fetchPaginatedData = async (endpoint, params = {}, page = 1) => {
+    const response = await axios.get(`https://api.themoviedb.org/3/${endpoint}`, {
+        headers: {
+            'Authorization': `Bearer ${process.env.TMDB_API_TOKEN}`,
+            'accept': 'application/json'
+        },
+        params: {
+            ...params,
+            page,
+            language: 'en-US'
+        }
+    });
+    return response.data;
+};
+
 // API Routes
 app.get('/api/trending/movie', async (req, res) => {
     try {
@@ -89,12 +105,12 @@ app.get('/api/top/tv', async (req, res) => {
 // Get content by ID (movie or TV)
 app.get('/api/content/:type/:id', async (req, res) => {
     const { type, id } = req.params;
-    
+
     // Validate type
     if (type !== 'movie' && type !== 'tv') {
         return res.status(400).json({ error: 'Invalid content type. Must be "movie" or "tv"' });
     }
-    
+
     try {
         const response = await axios.get(`https://api.themoviedb.org/3/${type}/${id}`, {
             headers: {
@@ -113,6 +129,30 @@ app.get('/api/content/:type/:id', async (req, res) => {
         } else {
             res.status(500).json({ error: `Failed to fetch ${type} details` });
         }
+    }
+});
+
+// MOVIES - with pagination
+app.get('/api/allmovie', async (req, res) => {
+    const page = parseInt(req.query.page) || 1;
+    try {
+        const data = await fetchPaginatedData('discover/movie', {}, page);
+        res.json(data);
+    } catch (error) {
+        console.error('Error fetching movies:', error.message);
+        res.status(500).json({ error: 'Failed to fetch movies' });
+    }
+});
+
+// TV SERIES - with pagination
+app.get('/api/alltv', async (req, res) => {
+    const page = parseInt(req.query.page) || 1;
+    try {
+        const data = await fetchPaginatedData('discover/tv', {}, page);
+        res.json(data);
+    } catch (error) {
+        console.error('Error fetching TV shows:', error.message);
+        res.status(500).json({ error: 'Failed to fetch TV shows' });
     }
 });
 

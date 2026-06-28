@@ -3,7 +3,6 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  
   "homepage": "https://Prazeen7.github.io/movie-streaming-app",
   "scripts": {
     "dev": "vite",

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { getLastWatchedEpisode } from '../utils/progressTracker';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
@@ -6,6 +6,19 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
 export default function ContinueWatching({ setSelectedMovie, movies, tv }) {
     const [continueWatching, setContinueWatching] = useState([]);
     const [loading, setLoading] = useState(true);
+    const scrollRef = useRef(null);
+
+    const scrollLeft = () => {
+        if (scrollRef.current) {
+            scrollRef.current.scrollBy({ left: -320, behavior: 'smooth' });
+        }
+    };
+
+    const scrollRight = () => {
+        if (scrollRef.current) {
+            scrollRef.current.scrollBy({ left: 320, behavior: 'smooth' });
+        }
+    };
 
     useEffect(() => {
         loadContinueWatching();
@@ -146,11 +159,11 @@ export default function ContinueWatching({ setSelectedMovie, movies, tv }) {
                     ))}
                 </div>
                 <style>{`
-          @keyframes pulse {
-            0%, 100% { opacity: 0.5; }
-            50% { opacity: 0.8; }
-          }
-        `}</style>
+                    @keyframes pulse {
+                        0%, 100% { opacity: 0.5; }
+                        50% { opacity: 0.8; }
+                    }
+                `}</style>
             </div>
         );
     }
@@ -159,35 +172,111 @@ export default function ContinueWatching({ setSelectedMovie, movies, tv }) {
         return null;
     }
 
-    return (
-        <div style={{ padding: '20px 40px' }}>
-            <h2 style={{
-                fontSize: '24px',
-                fontWeight: '700',
-                marginBottom: '20px',
-                color: '#fff',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px'
-            }}>
-                <span>Continue Watching</span>
-                <span style={{
-                    fontSize: '14px',
-                    color: '#666',
-                    fontWeight: '400'
-                }}>
-                    ({continueWatching.length} {continueWatching.length === 1 ? 'item' : 'items'})
-                </span>
-            </h2>
+    const hasItems = continueWatching.length > 0;
 
+    return (
+        <div style={{ padding: '20px 40px', position: 'relative' }}>
             <div style={{
                 display: 'flex',
-                gap: '20px',
-                overflowX: 'auto',
-                paddingBottom: '8px',
-                scrollbarWidth: 'thin',
-                scrollbarColor: '#333 transparent'
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: '20px'
             }}>
+                <h2 style={{
+                    fontSize: '24px',
+                    fontWeight: '700',
+                    color: '#fff',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px'
+                }}>
+                    <span>Continue Watching</span>
+                </h2>
+                {hasItems && (
+                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        <button
+                            onClick={scrollLeft}
+                            style={{
+                                backgroundColor: 'rgba(42, 42, 64, 0.8)',
+                                border: '1px solid rgba(255,255,255,0.1)',
+                                color: '#fff',
+                                padding: '0.5rem',
+                                borderRadius: '50%',
+                                cursor: 'pointer',
+                                fontSize: '1.2rem',
+                                transition: 'all 0.3s ease',
+                                width: '40px',
+                                height: '40px',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                backdropFilter: 'blur(8px)',
+                            }}
+                            onMouseEnter={(e) => {
+                                e.target.style.backgroundColor = 'rgba(229, 9, 20, 0.9)';
+                                e.target.style.transform = 'scale(1.1)';
+                                e.target.style.borderColor = 'rgba(229, 9, 20, 0.5)';
+                            }}
+                            onMouseLeave={(e) => {
+                                e.target.style.backgroundColor = 'rgba(42, 42, 64, 0.8)';
+                                e.target.style.transform = 'scale(1)';
+                                e.target.style.borderColor = 'rgba(255,255,255,0.1)';
+                            }}
+                        >
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                <polyline points="15 18 9 12 15 6"></polyline>
+                            </svg>
+                        </button>
+                        <button
+                            onClick={scrollRight}
+                            style={{
+                                backgroundColor: 'rgba(42, 42, 64, 0.8)',
+                                border: '1px solid rgba(255,255,255,0.1)',
+                                color: '#fff',
+                                padding: '0.5rem',
+                                borderRadius: '50%',
+                                cursor: 'pointer',
+                                fontSize: '1.2rem',
+                                transition: 'all 0.3s ease',
+                                width: '40px',
+                                height: '40px',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                backdropFilter: 'blur(8px)',
+                            }}
+                            onMouseEnter={(e) => {
+                                e.target.style.backgroundColor = 'rgba(229, 9, 20, 0.9)';
+                                e.target.style.transform = 'scale(1.1)';
+                                e.target.style.borderColor = 'rgba(229, 9, 20, 0.5)';
+                            }}
+                            onMouseLeave={(e) => {
+                                e.target.style.backgroundColor = 'rgba(42, 42, 64, 0.8)';
+                                e.target.style.transform = 'scale(1)';
+                                e.target.style.borderColor = 'rgba(255,255,255,0.1)';
+                            }}
+                        >
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                <polyline points="9 18 15 12 9 6"></polyline>
+                            </svg>
+                        </button>
+                    </div>
+                )}
+            </div>
+
+            <div
+                ref={scrollRef}
+                style={{
+                    display: 'flex',
+                    gap: '20px',
+                    overflowX: 'auto',
+                    paddingBottom: '8px',
+                    scrollBehavior: 'smooth',
+                    scrollbarWidth: 'none',
+                    msOverflowStyle: 'none',
+                }}
+                className="hide-scrollbar"
+            >
                 {continueWatching.map((item) => (
                     <div
                         key={item.key}
@@ -355,6 +444,12 @@ export default function ContinueWatching({ setSelectedMovie, movies, tv }) {
                     </div>
                 ))}
             </div>
+
+            <style>{`
+                .hide-scrollbar::-webkit-scrollbar {
+                    display: none;
+                }
+            `}</style>
         </div>
     );
 }
